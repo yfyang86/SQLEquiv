@@ -1,4 +1,52 @@
-# Task
+# SQL Equivalence Analysis Library
+
+A comprehensive Python library for analyzing SQL query equivalence using algebraic, graph-based, and embedding-based approaches.
+
+This is part of my Open NL2SQL/Chat2BI Course (2025-Dec).
+
+Lic: Apache 2.0 
+Yifan Yang <yfyang.86 hotmail>
+
+cite: 
+
+```latex
+@misc{yfyang2025sqlequiv,
+    title={A comprehensive Python library for analyzing SQL query equivalence using algebraic, graph-based, and embedding-based approaches.},
+    year={2025},
+    author={Yifan Yang},
+    url={https://github.com/yfyang86/SQLEquiv}
+}
+```
+
+
+## Development Status:
+
+In progress.
+
+## Features
+
+- **Multiple Analysis Methods**:
+  - [p] Algebraic equivalence checking using relational algebra
+  - Graph-based equivalence using query graphs and LQT
+  - Embedding-based similarity using modern ML techniques
+
+- **Comprehensive SQL Support**:
+  - [p] Complex queries with subqueries and CTEs
+  - [p] Join operations (INNER, LEFT, RIGHT, FULL)
+  - [p] Set operations (UNION, INTERSECT, EXCEPT)
+  - [p] Aggregate and window functions
+  - [p] Various scalar functions
+
+- **Extensible Architecture**:
+  - Easy to add new operators and functions
+  - Pluggable ML models for embeddings
+  - Customizable equivalence rules
+
+## Installation
+
+```bash
+pip install sql-equivalence
+```
 
 # Structure
 
