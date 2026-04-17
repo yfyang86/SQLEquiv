@@ -1,13 +1,15 @@
 # SQL Equivalence Analysis Library
 
-A comprehensive Python library for analyzing SQL query equivalence using algebraic, graph-based, and embedding-based approaches.
+A Python library for analyzing SQL query equivalence through three complementary
+lenses: **algebraic** (relational-algebra canonical form), **graph-based**
+(isomorphism and structural similarity over the query graph), and
+**embedding-based** (vector similarity over learned or hashed representations).
 
-This is part of my Open NL2SQL/Chat2BI Course (2025-Dec).
+Part of the Open NL2SQL / Chat2BI course (2025-Dec).
 
-Lic: Apache 2.0 
-Yifan Yang <yfyang.86 hotmail>
+License: Apache 2.0 — Yifan Yang `<yfyang.86@hotmail>`
 
-cite: 
+Cite:
 
 ```latex
 @misc{yfyang2025sqlequiv,
@@ -18,29 +20,63 @@ cite:
 }
 ```
 
+---
 
-## Development Status:
+## Development status
 
-In progress.
+**Alpha, under active development.** The four-phase roadmap in
+[`Future-Plan.md`](./Future-Plan.md) is fully landed on this branch:
+
+- ✅ Phase A — all three analysis methods produce meaningful verdicts.
+- ✅ Phase B — fixture corpus, ruff / mypy config, GitHub Actions CI matrix,
+  latency bench.
+- ✅ Phase C — plugin registry, hashing-baseline embedding model, PyPI-ready
+  metadata, CHANGELOG.
+- ✅ Phase D — Markdown / JSON proof export, Streamlit demo, HF-style
+  dataset card for the corpus.
+
+Current test status: **102 passed, 7 xfail-strict known-gap markers**. See
+[`sql_equivalence/tests/fixtures.py`](./sql_equivalence/tests/fixtures.py) for
+the curated regression corpus and
+[`Future-Plan.md`](./Future-Plan.md) for the go / no-go list.
 
 ## Features
 
-- **Multiple Analysis Methods**:
-  - [p] Algebraic equivalence checking using relational algebra
-  - Graph-based equivalence using query graphs and LQT
-  - Embedding-based similarity using modern ML techniques
+### Analysis methods
 
-- **Comprehensive SQL Support**:
-  - [p] Complex queries with subqueries and CTEs
-  - [p] Join operations (INNER, LEFT, RIGHT, FULL)
-  - [p] Set operations (UNION, INTERSECT, EXCEPT)
-  - [p] Aggregate and window functions
-  - [p] Various scalar functions
+| Method | What it does | When to use |
+|--------|--------------|-------------|
+| `algebraic` | Converts both queries to relational-algebra canonical form, then checks structural identity with rule-based rewrites (selection pushdown, join commutativity, ...). Produces proof steps. | Precise equivalence up to the supported rewrite rules. |
+| `graph` | Builds a `DiGraph` from the AST and runs attribute-aware `networkx.is_isomorphic`, falling back to a weighted similarity (node-type Jaccard + (type, value) Jaccard + degree / spectral distance). | Catches name-level differences (table, column, literal values). |
+| `embedding` | Produces a deterministic vector (via `GraphEmbedding` over node features, or the built-in `HashingVectorEncoder`, or a plugin), then computes cosine similarity mapped to `[0, 1]`. | Approximate, fast; ideal for large candidate pools. |
 
-- **Extensible Architecture**:
-  - Easy to add new operators and functions
-  - Pluggable ML models for embeddings
-  - Customizable equivalence rules
+All three methods run by default and the analyzer returns `is_equivalent=True`
+only when all vote yes (unanimous agreement).
+
+### Supported SQL
+
+Built on [sqlglot](https://github.com/tobymao/sqlglot) — the library inherits
+its dialect coverage (PostgreSQL is the reference dialect).
+
+- SELECT with multi-column projection, `DISTINCT`, aliases.
+- WHERE / GROUP BY / HAVING / ORDER BY / LIMIT.
+- JOINs: INNER, LEFT, RIGHT, FULL (types are currently compared structurally,
+  not semantically — see known gaps below).
+- Set operations: UNION, UNION ALL, INTERSECT, EXCEPT.
+- CTEs (`WITH ...`).
+- Subqueries in FROM / WHERE (IN, EXISTS).
+- Aggregate functions (COUNT, SUM, AVG, MIN, MAX).
+- Window functions (ROW_NUMBER, RANK, ...) with `PARTITION BY` / `ORDER BY`.
+- Scalar functions (UPPER, LOWER, COALESCE, ...).
+
+### Extensibility
+
+- **Plugin registry**: third-party packages can register a custom analysis
+  method via the `sql_equivalence.methods` entry-point group, or at runtime
+  via `analyzer.register_method(name, runner)`.
+- **Custom embeddings**: pass any object with an `encode(query) -> np.ndarray`
+  method to `SQLEquivalenceAnalyzer(embedding_model=...)`. Ships with a
+  `HashingVectorEncoder` baseline.
 
 ## Installation
 
@@ -48,160 +84,195 @@ In progress.
 pip install sql-equivalence
 ```
 
-# Structure
+Optional extras:
+
+```bash
+pip install "sql-equivalence[viz]"   # matplotlib + graphviz + plotly
+pip install "sql-equivalence[ml]"    # torch + transformers (plugin targets)
+pip install "sql-equivalence[dev]"   # pytest, ruff, mypy
+```
+
+The core install has no display-server or GPU dependencies — `graphviz` and
+`plotly` are imported lazily only when visualization is invoked.
+
+## Quick start
+
+```python
+from sql_equivalence import SQLEquivalenceAnalyzer
+
+analyzer = SQLEquivalenceAnalyzer()
+
+sql1 = "SELECT id, name FROM users WHERE age >= 18"
+sql2 = "SELECT id, name FROM users WHERE age >= 18"   # identical
+
+result = analyzer.analyze(sql1, sql2)
+print(result.is_equivalent, result.confidence)       # True 1.0
+for method, outcome in result.method_results.items():
+    print(f"  {method}: {outcome['is_equivalent']} ({outcome['confidence']:.2f})")
+```
+
+Select specific methods, or ask for detailed output:
+
+```python
+result = analyzer.analyze(sql1, sql2, methods=["algebraic"], detailed=True)
+print(result.method_results["algebraic"]["proof_steps"])
+```
+
+Use a custom embedding model:
+
+```python
+from sql_equivalence.models import HashingVectorEncoder
+analyzer = SQLEquivalenceAnalyzer(embedding_model=HashingVectorEncoder(dim=256))
+```
+
+Register a custom analysis method:
+
+```python
+def vote_no(parsed1, parsed2, detailed):
+    return {"is_equivalent": False, "confidence": 0.0, "equivalence_type": "not_equivalent"}
+
+analyzer.register_method("vote_no", vote_no)
+result = analyzer.analyze(sql1, sql2, methods=["algebraic", "vote_no"])
+```
+
+### Export a human-readable proof
+
+```python
+from sql_equivalence.proof_export import to_markdown, to_json
+result = analyzer.analyze(sql1, sql2, detailed=True)
+print(to_markdown(result))       # per-method votes, proof steps, canonical forms
+print(to_json(result, indent=2)) # same as result.to_dict() with a repr fallback
+```
+
+### Streamlit demo
+
+```bash
+pip install streamlit
+streamlit run scripts/streamlit_demo.py
+```
+
+### Latency benchmark
+
+```bash
+python scripts/bench.py --runs 10 --methods algebraic graph embedding
+```
+
+## Known limitations
+
+The library is alpha and the three checkers have known blind spots that are
+tracked as `xfail(strict=True)` regression markers in
+`sql_equivalence/tests/fixtures.py::KNOWN_GAP_PAIRS`. Removing an entry from
+that list requires the corresponding checker to be tightened. Current gaps:
+
+- Opposite WHERE predicates (`age > 10` vs `age < 10`).
+- JOIN-type semantics (`INNER JOIN` vs `LEFT JOIN`).
+- UNION vs UNION ALL (duplicate-preservation).
+- LIMIT value (`LIMIT 10` vs `LIMIT 100`).
+- Different aggregate functions (`COUNT(*)` vs `SUM(salary)`).
+- Window function `PARTITION BY` column names are currently drowned out by
+  the rest of the window scaffolding in graph similarity.
+
+When in doubt, pin behavior with a test:
+
+```bash
+pytest sql_equivalence/tests/ -q
+```
+
+## Project layout
 
 ```
 sql_equivalence/
 ├── __init__.py
+├── analyzer.py                   # SQLEquivalenceAnalyzer (public entry point)
+├── plugins.py                    # register_method / load_entry_points
+├── proof_export.py               # Markdown / JSON renderer for AnalysisResult
+│
 ├── parser/
-│   ├── __init__.py
-│   ├── sql_parser.py          # Main SQL parsing module
-│   ├── ast_builder.py         # Abstract syntax tree builder
-│   └── normalizer.py          # SQL normalization
+│   ├── sql_parser.py             # SQLParser, ParsedQuery (sqlglot-backed)
+│   ├── ast_builder.py            # sqlglot → ASTNode tree
+│   └── normalizer.py             # whitespace / case / AST normalization
 │
 ├── representations/
-│   ├── __init__.py
-│   ├── base.py                # Base representation class
+│   ├── base.py                   # QueryRepresentation ABC
 │   ├── algebraic/
-│   │   ├── __init__.py
-│   │   ├── relational_algebra.py  # Relational algebra expressions
-│   │   ├── operators.py           # Algebraic operator definitions
-│   │   └── expression_tree.py     # Algebraic expression tree
-│   │
+│   │   ├── relational_algebra.py # AlgebraicExpression
+│   │   ├── operators.py          # Algebraic operators (π, σ, ⋈, ...)
+│   │   └── expression_tree.py    # ExpressionTree + lazy graphviz viz
 │   ├── graph/
-│   │   ├── __init__.py
-│   │   ├── query_graph.py         # Query graph representation
-│   │   ├── lqt.py                # Logical Query Tree (LQT)
-│   │   └── graph_builder.py       # Graph builder
-│   │
+│   │   ├── query_graph.py        # NetworkX-backed AST graph
+│   │   └── lqt.py                # Logical Query Tree (rooted)
 │   └── embedding/
-│       ├── __init__.py
-│       ├── encoder.py             # Encoder base class
-│       ├── node_embedding.py      # Node embeddings
-│       └── graph_embedding.py     # Graph embeddings
+│       ├── encoder.py            # QueryEncoder ABC
+│       ├── node_embedding.py     # Deterministic hashed node vectors
+│       └── graph_embedding.py    # Mean/sum/max pooling over nodes
 │
 ├── equivalence/
-│   ├── __init__.py
-│   ├── base.py                    # Equivalence checker base class
-│   ├── algebraic_equivalence.py   # Algebraic equivalence checker
-│   ├── graph_equivalence.py       # Graph isomorphism equivalence
-│   └── embedding_similarity.py    # Embedding similarity checker
+│   ├── base.py                   # EquivalenceChecker + EquivalenceResult
+│   ├── algebraic_equivalence.py  # Rule-based algebraic checker
+│   ├── graph_equivalence.py      # NetworkX isomorphism + similarity cascade
+│   └── embedding_similarity.py   # Cosine + optional ensemble
 │
-├── operators/
-│   ├── __init__.py
-│   ├── base_operator.py           # Operator base class
-│   ├── relational_operators.py    # Relational operators (SELECT, FROM, JOIN, ...)
-│   ├── set_operators.py           # Set operators (UNION, INTERSECT, ...)
-│   ├── aggregate_functions.py     # Aggregate functions
-│   ├── window_functions.py        # Window functions
-│   └── scalar_functions.py        # Scalar functions
-│
-├── transformations/
-│   ├── __init__.py
-│   ├── algebraic_rules.py         # Algebraic transformation rules
-│   ├── graph_transformations.py   # Graph transformation rules
-│   └── optimization_rules.py      # Query optimization rules
-│
-├── utils/
-│   ├── __init__.py
-│   ├── sql_utils.py              # SQL utility functions
-│   ├── graph_utils.py            # Graph algorithm utilities
-│   ├── algebra_utils.py          # Algebra utilities
-│   └── visualization.py          # Visualization utilities
-│
+├── operators/                    # Clause-level operator classes
+├── transformations/              # Algebraic / graph rewrite rules
+├── utils/                        # sql_utils, graph_utils, visualization
 ├── models/
-│   ├── __init__.py
-│   ├── ml_models.py              # Machine learning model interfaces
-│   ├── similarity_models.py       # Similarity models
-│   └── embedding_models.py        # Embedding models
+│   ├── embedding_models.py       # HashingVectorEncoder
+│   └── ...                       # Placeholders for ML plug-ins
 │
-├── examples/
-│   ├── __init__.py
-│   ├── basic_examples.py         # Basic examples
-│   └── advanced_examples.py      # Advanced examples
-│
+├── examples/                     # Hand-written runnable examples
 └── tests/
-    ├── __init__.py
+    ├── fixtures.py               # Curated corpus + KNOWN_GAP_PAIRS
     ├── test_parser.py
     ├── test_algebraic.py
     ├── test_graph.py
-    └── test_equivalence.py
+    ├── test_embedding.py
+    ├── test_complex_queries.py   # CTEs, windows, set ops, subqueries
+    ├── test_corpus.py
+    ├── test_plugins.py
+    ├── test_proof_export.py
+    └── test_models.py
 ```
 
 ```mermaid
 graph LR
-    A[sql_equivalence] --> B[__init__.py]
-    A --> C[parser]
-    C --> C1[__init__.py]
-    C --> C2[sql_parser.py]
-    C --> C3[ast_builder.py]
-    C --> C4[normalizer.py]
-    
-    A --> D[representations]
-    D --> D1[__init__.py]
-    D --> D2[base.py]
-    D --> D3[algebraic]
-    D3 --> D31[__init__.py]
-    D3 --> D32[relational_algebra.py]
-    D3 --> D33[operators.py]
-    D3 --> D34[expression_tree.py]
-    D --> D4[graph]
-    D4 --> D41[__init__.py]
-    D4 --> D42[query_graph.py]
-    D4 --> D43[lqt.py]
-    D4 --> D44[graph_builder.py]
-    D --> D5[embedding]
-    D5 --> D51[__init__.py]
-    D5 --> D52[encoder.py]
-    D5 --> D53[node_embedding.py]
-    D5 --> D54[graph_embedding.py]
-    
-    A --> E[equivalence]
-    E --> E1[__init__.py]
-    E --> E2[base.py]
-    E --> E3[algebraic_equivalence.py]
-    E --> E4[graph_equivalence.py]
-    E --> E5[embedding_similarity.py]
-    
-    A --> F[operators]
-    F --> F1[__init__.py]
-    F --> F2[base_operator.py]
-    F --> F3[relational_operators.py]
-    F --> F4[set_operators.py]
-    F --> F5[aggregate_functions.py]
-    F --> F6[window_functions.py]
-    F --> F7[scalar_functions.py]
-    
-    A --> G[transformations]
-    G --> G1[__init__.py]
-    G --> G2[algebraic_rules.py]
-    G --> G3[graph_transformations.py]
-    G --> G4[optimization_rules.py]
-    
-    A --> H[utils]
-    H --> H1[__init__.py]
-    H --> H2[sql_utils.py]
-    H --> H3[graph_utils.py]
-    H --> H4[algebra_utils.py]
-    H --> H5[visualization.py]
-    
-    A --> I[models]
-    I --> I1[__init__.py]
-    I --> I2[ml_models.py]
-    I --> I3[similarity_models.py]
-    I --> I4[embedding_models.py]
-    
-    A --> J[examples]
-    J --> J1[__init__.py]
-    J --> J2[basic_examples.py]
-    J --> J3[advanced_examples.py]
-    
-    A --> K[tests]
-    K --> K1[__init__.py]
-    K --> K2[test_parser.py]
-    K --> K3[test_algebraic.py]
-    K --> K4[test_graph.py]
-    K --> K5[test_equivalence.py]
+    A[sql_equivalence] --> AN[analyzer.py]
+    A --> PL[plugins.py]
+    A --> PE[proof_export.py]
 
+    A --> P[parser/]
+    P --> P1[sql_parser.py]
+    P --> P2[ast_builder.py]
+    P --> P3[normalizer.py]
+
+    A --> R[representations/]
+    R --> RA[algebraic/<br/>relational_algebra • operators • expression_tree]
+    R --> RG[graph/<br/>query_graph • lqt]
+    R --> RE[embedding/<br/>encoder • node_embedding • graph_embedding]
+
+    A --> E[equivalence/]
+    E --> EA[algebraic_equivalence.py]
+    E --> EG[graph_equivalence.py]
+    E --> EM[embedding_similarity.py]
+
+    A --> O[operators/]
+    A --> T[transformations/]
+    A --> U[utils/]
+    A --> M[models/<br/>HashingVectorEncoder]
+
+    A --> X[examples/]
+    A --> TS[tests/<br/>parser • algebraic • graph • embedding •<br/>complex_queries • corpus • plugins •<br/>proof_export • models • fixtures]
 ```
 
+## Development
+
+```bash
+git clone https://github.com/yfyang86/SQLEquiv
+cd SQLEquiv
+pip install -e "sql_equivalence[dev]"
+
+pytest sql_equivalence/tests/ -q                # 102 passed, 7 xfailed
+ruff check sql_equivalence                      # lint
+python scripts/bench.py --runs 5                # latency smoke bench
+```
+
+CI runs the suite on Python 3.8 / 3.10 / 3.12 (see `.github/workflows/ci.yml`).
