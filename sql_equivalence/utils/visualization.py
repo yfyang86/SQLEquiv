@@ -1,16 +1,16 @@
-# sql_equivalence/utils/visualization.py
-"""Visualization utilities for query analysis."""
+"""Visualization utilities for query analysis.
 
-import os
-from typing import Any, Dict, List, Optional, Union, Tuple
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import networkx as nx
-import graphviz
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
+Heavy optional dependencies (``graphviz`` and ``plotly``) are imported lazily
+inside the functions that need them so that the core library can be used
+without installing the full visualization stack.
+"""
+
 import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import networkx as nx
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +126,8 @@ def visualize_expression_tree(expression_tree: 'ExpressionTree',
     Returns:
         Path to saved file or graphviz object
     """
+    import graphviz  # lazy import
+
     dot = graphviz.Digraph(comment='Expression Tree')
     dot.attr(rankdir='TB')
     dot.attr('node', shape='box', style='rounded,filled', fillcolor='lightblue')
@@ -226,7 +228,9 @@ def create_query_comparison_plot(results: List[Dict[str, Any]],
     Returns:
         Path to saved file or figure object
     """
-    # Create subplots
+    import plotly.graph_objects as go  # lazy import
+    from plotly.subplots import make_subplots
+
     fig = make_subplots(
         rows=2, cols=2,
         subplot_titles=('Equivalence Results', 'Confidence Scores',
@@ -332,10 +336,10 @@ def create_interactive_graph(graph: nx.Graph,
     Returns:
         Path to saved file or plotly figure
     """
-    # Get node positions
+    import plotly.graph_objects as go  # lazy import
+
     pos = nx.spring_layout(graph, k=2, iterations=50)
-    
-    # Create edge traces
+
     edge_traces = []
     for edge in graph.edges():
         x0, y0 = pos[edge[0]]
@@ -429,6 +433,8 @@ def create_similarity_heatmap(similarity_matrix: Any,
     Returns:
         Path to saved file or figure object
     """
+    import plotly.graph_objects as go  # lazy import
+
     fig = go.Figure(data=go.Heatmap(
         z=similarity_matrix,
         x=labels,

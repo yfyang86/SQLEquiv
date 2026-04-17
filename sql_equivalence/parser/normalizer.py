@@ -2,9 +2,10 @@
 """SQL normalization utilities."""
 
 import re
-from typing import Dict, List, Optional, Set
+
 import sqlglot
 from sqlglot import expressions as exp
+from sqlglot.errors import ParseError
 
 class SQLNormalizer:
     """Normalizes SQL queries for consistent comparison."""
@@ -54,14 +55,12 @@ class SQLNormalizer:
         for rule in self.rules:
             normalized = rule(normalized)
         
-        # Parse and reformat using sqlglot for consistent formatting
         try:
             parsed = sqlglot.parse_one(normalized)
             normalized = parsed.sql(pretty=False, normalize=True)
-        except:
-            # If parsing fails, return the result of text-based normalization
+        except ParseError:
             pass
-        
+
         return normalized.strip()
     
     def _normalize_whitespace(self, sql: str) -> str:
@@ -167,16 +166,10 @@ class SQLNormalizer:
         This is more accurate but slower than text-based normalization.
         """
         try:
-            # Parse SQL
             ast = sqlglot.parse_one(sql)
-            
-            # Apply AST-based transformations
             ast = self._normalize_ast(ast)
-            
-            # Convert back to SQL
             return ast.sql(pretty=False, normalize=True)
-        except Exception as e:
-            # Fall back to text-based normalization
+        except ParseError:
             return self.normalize(sql)
     
     def _normalize_ast(self, ast: exp.Expression) -> exp.Expression:

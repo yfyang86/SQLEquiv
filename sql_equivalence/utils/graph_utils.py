@@ -161,13 +161,13 @@ def compute_graph_statistics(graph: nx.Graph) -> Dict[str, Any]:
         stats['is_connected'] = nx.is_connected(graph)
         stats['num_components'] = nx.number_connected_components(graph)
     
-    # Centrality measures (for small graphs)
+    # Centrality measures (for small graphs only)
     if stats['num_nodes'] < 1000:
         try:
-            stats['avg_betweenness'] = np.mean(list(nx.betweenness_centrality(graph).values()))
-            stats['avg_closeness'] = np.mean(list(nx.closeness_centrality(graph).values()))
-        except:
-            pass
+            stats['avg_betweenness'] = float(np.mean(list(nx.betweenness_centrality(graph).values())))
+            stats['avg_closeness'] = float(np.mean(list(nx.closeness_centrality(graph).values())))
+        except (nx.NetworkXError, ZeroDivisionError) as err:
+            logger.debug("Skipping centrality measures: %s", err)
     
     # Clustering
     if not graph.is_directed():
@@ -322,16 +322,16 @@ def compute_graph_similarity_matrix(graphs: List[nx.Graph],
                         similarity = 0.0
                 
                 elif method == 'spectral':
-                    # Spectral similarity based on eigenvalues
                     try:
                         spec1 = nx.laplacian_spectrum(graphs[i])
                         spec2 = nx.laplacian_spectrum(graphs[j])
-                        # Pad shorter spectrum with zeros
                         max_len = max(len(spec1), len(spec2))
                         spec1 = np.pad(spec1, (0, max_len - len(spec1)))
                         spec2 = np.pad(spec2, (0, max_len - len(spec2)))
-                        similarity = 1.0 - np.linalg.norm(spec1 - spec2) / np.linalg.norm(spec1 + spec2)
-                    except:
+                        denom = np.linalg.norm(spec1 + spec2)
+                        similarity = 1.0 - np.linalg.norm(spec1 - spec2) / denom if denom else 0.0
+                    except (nx.NetworkXError, ValueError) as err:
+                        logger.debug("Spectral similarity failed: %s", err)
                         similarity = 0.0
                 
                 else:

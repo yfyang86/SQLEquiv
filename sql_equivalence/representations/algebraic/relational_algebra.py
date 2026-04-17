@@ -1,4 +1,3 @@
-# sql_equivalence/representations/algebraic/relational_algebra.py (comprehensive fix)
 """Relational algebra representation of SQL queries."""
 
 from typing import Dict, List, Optional, Any, Set, Union

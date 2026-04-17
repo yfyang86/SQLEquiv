@@ -1,9 +1,7 @@
-# sql_equivalence/representations/algebraic/expression_tree.py
 """Expression tree for algebraic expressions."""
 
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
-import graphviz
+from typing import Any, Dict, List, Optional, Union
 
 from .operators import AlgebraicOperator
 
@@ -128,40 +126,39 @@ class ExpressionTree:
             'leaf_count': len(self.get_leaves())
         }
     
-    def visualize(self, output_path: Optional[str] = None, 
-                  format: str = 'png') -> Union[str, graphviz.Digraph]:
-        """
-        Visualize the expression tree.
-        
+    def visualize(self, output_path: Optional[str] = None, format: str = 'png') -> Any:
+        """Visualize the expression tree.
+
+        ``graphviz`` is imported lazily so the core package does not require it.
+
         Args:
-            output_path: Path to save the visualization
-            format: Output format (png, pdf, svg, etc.)
-            
+            output_path: Path to save the visualization.
+            format: Output format (png, pdf, svg, ...).
+
         Returns:
-            Path to saved file or graphviz object
+            Either the path to the rendered file (when ``output_path`` is given)
+            or the underlying ``graphviz.Digraph`` object.
         """
+        import graphviz  # lazy import
+
         dot = graphviz.Digraph(comment='Expression Tree')
         dot.attr(rankdir='TB')
-        
         if not self.root:
             return dot
-        
-        # Add nodes
-        def add_nodes(node: ExpressionNode):
+
+        def add_nodes(node: ExpressionNode) -> None:
             label = f"{node.operator.operator_type.value}\n{node.operator.to_string()[:50]}"
             shape = 'box' if node.is_leaf() else 'ellipse'
             dot.node(str(node.node_id), label=label, shape=shape)
-            
             for child in node.children:
                 add_nodes(child)
                 dot.edge(str(node.node_id), str(child.node_id))
-        
+
         add_nodes(self.root)
-        
+
         if output_path:
             dot.render(output_path, format=format, cleanup=True)
             return f"{output_path}.{format}"
-        
         return dot
     
     def clone(self) -> 'ExpressionTree':

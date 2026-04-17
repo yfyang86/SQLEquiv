@@ -1,11 +1,11 @@
-# sql_equivalence/parser/sql_parser.py (updated version)
 """Main SQL parser module."""
 
-from typing import Dict, List, Optional, Any, Set
-import sqlglot
-from sqlglot import expressions as exp
 import logging
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+import sqlglot
+from sqlglot import expressions as exp
 
 from .ast_builder import ASTBuilder, ASTNode
 from .normalizer import SQLNormalizer
@@ -342,7 +342,7 @@ class SQLParser:
                 results.append(None)
         return results
     
-    def validate_sql(self, sql: str) -> tuple[bool, Optional[str]]:
+    def validate_sql(self, sql: str) -> Tuple[bool, Optional[str]]:
         """
         Validate SQL syntax without full parsing.
         

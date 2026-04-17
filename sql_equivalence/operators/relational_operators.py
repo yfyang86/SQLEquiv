@@ -1,8 +1,7 @@
 # sql_equivalence/operators/relational_operators.py
 """Relational SQL operators."""
 
-from typing import Any, Dict, List, Optional, Set, Union
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 from .base_operator import (
     BaseOperator, OperatorCategory, OperatorProperties,
@@ -37,7 +36,7 @@ class SelectOperator(BaseOperator):
         self.parameters['distinct'] = distinct
         self._hash = None
     
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> Tuple[bool, Optional[str]]:
         if not self.columns:
             return False, "SELECT requires at least one column"
         return True, None
@@ -116,7 +115,7 @@ class FromOperator(BaseOperator):
         self.parameters['tables'] = self.tables
         self._hash = None
     
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> Tuple[bool, Optional[str]]:
         if not self.tables:
             return False, "FROM requires at least one table"
         return True, None
@@ -261,7 +260,7 @@ class GroupByOperator(BaseOperator):
         self.parameters['columns'] = self.columns
         self._hash = None
     
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> Tuple[bool, Optional[str]]:
         if not self.columns:
             return False, "GROUP BY requires at least one column"
         return True, None
@@ -330,7 +329,7 @@ class OrderByOperator(BaseOperator):
         self.parameters['columns'] = self.columns
         self._hash = None
     
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> Tuple[bool, Optional[str]]:
         if not self.columns:
             return False, "ORDER BY requires at least one column"
         return True, None
@@ -371,7 +370,7 @@ class LimitOperator(BaseOperator):
         self.parameters['limit'] = limit
         self.parameters['offset'] = offset
     
-    def validate(self) -> tuple[bool, Optional[str]]:
+    def validate(self) -> Tuple[bool, Optional[str]]:
         if self.limit is None:
             return False, "LIMIT requires a limit value"
         if self.limit < 0:

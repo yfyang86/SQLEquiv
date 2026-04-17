@@ -55,70 +55,70 @@ sql_equivalence/
 ├── __init__.py
 ├── parser/
 │   ├── __init__.py
-│   ├── sql_parser.py          # SQL解析主模块
-│   ├── ast_builder.py         # 构建抽象语法树
-│   └── normalizer.py          # SQL标准化处理
+│   ├── sql_parser.py          # Main SQL parsing module
+│   ├── ast_builder.py         # Abstract syntax tree builder
+│   └── normalizer.py          # SQL normalization
 │
 ├── representations/
 │   ├── __init__.py
-│   ├── base.py                # 基础表示类
+│   ├── base.py                # Base representation class
 │   ├── algebraic/
 │   │   ├── __init__.py
-│   │   ├── relational_algebra.py  # 关系代数表达式
-│   │   ├── operators.py           # 代数算子定义
-│   │   └── expression_tree.py     # 代数表达式树
+│   │   ├── relational_algebra.py  # Relational algebra expressions
+│   │   ├── operators.py           # Algebraic operator definitions
+│   │   └── expression_tree.py     # Algebraic expression tree
 │   │
 │   ├── graph/
 │   │   ├── __init__.py
-│   │   ├── query_graph.py         # 查询图表示
-│   │   ├── lqt.py                # 逻辑查询树(LQT)
-│   │   └── graph_builder.py       # 图构建器
+│   │   ├── query_graph.py         # Query graph representation
+│   │   ├── lqt.py                # Logical Query Tree (LQT)
+│   │   └── graph_builder.py       # Graph builder
 │   │
 │   └── embedding/
 │       ├── __init__.py
-│       ├── encoder.py             # 编码器基类
-│       ├── node_embedding.py      # 节点嵌入
-│       └── graph_embedding.py     # 图嵌入
+│       ├── encoder.py             # Encoder base class
+│       ├── node_embedding.py      # Node embeddings
+│       └── graph_embedding.py     # Graph embeddings
 │
 ├── equivalence/
 │   ├── __init__.py
-│   ├── base.py                    # 等价性比较基类
-│   ├── algebraic_equivalence.py   # 代数等价性判断
-│   ├── graph_equivalence.py       # 图同构等价性判断
-│   └── embedding_similarity.py    # 嵌入相似度计算
+│   ├── base.py                    # Equivalence checker base class
+│   ├── algebraic_equivalence.py   # Algebraic equivalence checker
+│   ├── graph_equivalence.py       # Graph isomorphism equivalence
+│   └── embedding_similarity.py    # Embedding similarity checker
 │
 ├── operators/
 │   ├── __init__.py
-│   ├── base_operator.py           # 算子基类
-│   ├── relational_operators.py    # 关系算子(SELECT, FROM, JOIN等)
-│   ├── set_operators.py           # 集合算子(UNION, INTERSECT等)
-│   ├── aggregate_functions.py     # 聚合函数
-│   ├── window_functions.py        # 窗口函数
-│   └── scalar_functions.py        # 标量函数
+│   ├── base_operator.py           # Operator base class
+│   ├── relational_operators.py    # Relational operators (SELECT, FROM, JOIN, ...)
+│   ├── set_operators.py           # Set operators (UNION, INTERSECT, ...)
+│   ├── aggregate_functions.py     # Aggregate functions
+│   ├── window_functions.py        # Window functions
+│   └── scalar_functions.py        # Scalar functions
 │
 ├── transformations/
 │   ├── __init__.py
-│   ├── algebraic_rules.py         # 代数变换规则
-│   ├── graph_transformations.py   # 图变换规则
-│   └── optimization_rules.py      # 查询优化规则
+│   ├── algebraic_rules.py         # Algebraic transformation rules
+│   ├── graph_transformations.py   # Graph transformation rules
+│   └── optimization_rules.py      # Query optimization rules
 │
 ├── utils/
 │   ├── __init__.py
-│   ├── sql_utils.py              # SQL工具函数
-│   ├── graph_utils.py            # 图算法工具
-│   ├── algebra_utils.py          # 代数运算工具
-│   └── visualization.py          # 可视化工具
+│   ├── sql_utils.py              # SQL utility functions
+│   ├── graph_utils.py            # Graph algorithm utilities
+│   ├── algebra_utils.py          # Algebra utilities
+│   └── visualization.py          # Visualization utilities
 │
 ├── models/
 │   ├── __init__.py
-│   ├── ml_models.py              # 机器学习模型接口
-│   ├── similarity_models.py       # 相似度计算模型
-│   └── embedding_models.py        # 嵌入模型
+│   ├── ml_models.py              # Machine learning model interfaces
+│   ├── similarity_models.py       # Similarity models
+│   └── embedding_models.py        # Embedding models
 │
 ├── examples/
 │   ├── __init__.py
-│   ├── basic_examples.py         # 基础示例
-│   └── advanced_examples.py      # 高级示例
+│   ├── basic_examples.py         # Basic examples
+│   └── advanced_examples.py      # Advanced examples
 │
 └── tests/
     ├── __init__.py

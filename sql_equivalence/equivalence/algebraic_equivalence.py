@@ -1,21 +1,19 @@
-# sql_equivalence/equivalence/algebraic_equivalence.py
 """Algebraic equivalence checking for SQL queries."""
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+import json
 import logging
+import time
 from dataclasses import dataclass
 from enum import Enum
-import json
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .base import EquivalenceChecker, EquivalenceResult, EquivalenceType
 from ..representations.algebraic.relational_algebra import AlgebraicExpression
 from ..representations.algebraic.operators import (
     AlgebraicOperator, ProjectOperator, SelectOperator, JoinOperator,
     UnionOperator, IntersectOperator, ExceptOperator, AggregateOperator,
-    RelationOperator, OperatorType
+    RelationOperator, OperatorType,
 )
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -629,6 +627,3 @@ class AlgebraicEquivalenceChecker(EquivalenceChecker):
                     break
         
         return matches / max(len(preds1), len(preds2))
-
-# Additional imports needed
-import time

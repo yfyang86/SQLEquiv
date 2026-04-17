@@ -175,8 +175,7 @@ def is_select_query(sql: str, dialect: str = 'postgres') -> bool:
     try:
         parsed = sqlglot.parse_one(sql, read=dialect)
         return isinstance(parsed, exp.Select)
-    except:
-        # Fallback to simple string check
+    except sqlglot.errors.ParseError:
         sql_lower = sql.strip().lower()
         return sql_lower.startswith('select')
 
@@ -194,10 +193,9 @@ def get_sql_type(sql: str, dialect: str = 'postgres') -> str:
     try:
         parsed = sqlglot.parse_one(sql, read=dialect)
         return type(parsed).__name__.upper()
-    except:
-        # Fallback to simple string check
+    except sqlglot.errors.ParseError:
         sql_lower = sql.strip().lower()
-        for keyword in ['select', 'insert', 'update', 'delete', 'create', 'drop', 'alter']:
+        for keyword in ('select', 'insert', 'update', 'delete', 'create', 'drop', 'alter'):
             if sql_lower.startswith(keyword):
                 return keyword.upper()
         return 'UNKNOWN'
