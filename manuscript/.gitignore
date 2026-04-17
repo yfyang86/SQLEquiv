@@ -1,0 +1,3 @@
+/.quarto/
+# Keep _freeze/ under version control so readers reproduce the exact
+# rendered numbers without re-executing Python.

@@ -88,14 +88,14 @@ number, table, and figure below with the commands in
 ## Problem statement
 
 Given two queries $q_1, q_2$ over a common database schema $\mathcal{D}$,
-write $\llbracket q \rrbracket_D$ for the multiset of rows returned by
+write $[\![ q ]\!]_D$ for the multiset of rows returned by
 $q$ on instance $D \in \mathcal{D}$. Two notions of equivalence are
 useful:
 
 $$
 \begin{aligned}
-q_1 \equiv_{\text{set}} q_2 &\iff \forall D.\ \operatorname{set}\llbracket q_1 \rrbracket_D = \operatorname{set}\llbracket q_2 \rrbracket_D \\
-q_1 \equiv_{\text{bag}} q_2 &\iff \forall D.\ \llbracket q_1 \rrbracket_D = \llbracket q_2 \rrbracket_D
+q_1 \equiv_{\text{set}} q_2 &\iff \forall D.\ \operatorname{set}[\![ q_1 ]\!]_D = \operatorname{set}[\![ q_2 ]\!]_D \\
+q_1 \equiv_{\text{bag}} q_2 &\iff \forall D.\ [\![ q_1 ]\!]_D = [\![ q_2 ]\!]_D
 \end{aligned}
 $$
 
