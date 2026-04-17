@@ -6,8 +6,8 @@ _Last updated: 2026-04-17 (phases A/B/C landed on code-review-refactor branch)_
 
 - **Phase A** (make the three methods honest): ✅ landed in commit `20e8014`.
 - **Phase B** (test corpus, CI, ruff, mypy, benchmark): ✅ landed in `d53af95`.
-- **Phase C** (plugin registry, optional ML baseline, PyPI metadata): ✅ this commit.
-- **Phase D** (stretch goals): planned.
+- **Phase C** (plugin registry, optional ML baseline, PyPI metadata): ✅ landed in `5702cfe`.
+- **Phase D** (stretch: proof export, Streamlit demo, dataset card): ✅ this commit.
 
 
 This document records the current health of the library, the roadmap for
