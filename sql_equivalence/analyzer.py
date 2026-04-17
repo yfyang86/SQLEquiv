@@ -11,6 +11,7 @@ from .equivalence.algebraic_equivalence import AlgebraicEquivalenceChecker
 from .equivalence.embedding_similarity import EmbeddingSimilarityChecker
 from .equivalence.graph_equivalence import GraphEquivalenceChecker
 from .parser.sql_parser import ParsedQuery, SQLParser
+from .plugins import iter_methods, load_entry_points, register_method, unregister_method
 
 logger = logging.getLogger(__name__)
 
@@ -71,13 +72,42 @@ class SQLEquivalenceAnalyzer:
         self._cache: Optional[
             Dict[Tuple[str, str, Tuple[str, ...], bool], AnalysisResult]
         ] = ({} if enable_caching else None)
-        self._runners: Dict[str, MethodRunner] = {
+        self._builtin_runners: Dict[str, MethodRunner] = {
             'algebraic': self._run_algebraic,
             'graph': self._run_graph,
             'embedding': self._run_embedding,
         }
 
+        # Expose the built-ins to the plugin registry so that third-party
+        # plugins and built-ins share a single dispatch table.
+        for name, runner in self._builtin_runners.items():
+            try:
+                register_method(name, runner)
+            except ValueError:
+                # Built-ins may already be registered if the analyzer is
+                # instantiated multiple times -- that is fine.
+                pass
+        load_entry_points()
+
         logger.info("Initialized SQLEquivalenceAnalyzer with dialect: %s", dialect)
+
+    @property
+    def available_methods(self) -> Tuple[str, ...]:
+        """Return the names of every method currently callable via ``analyze``."""
+        return tuple(sorted(name for name, _ in iter_methods()))
+
+    def register_method(self, name: str, runner: MethodRunner) -> None:
+        """Register a custom analysis method on this analyzer instance.
+
+        The method is added to the global plugin registry; other analyzers
+        created after this call will see it too. Use
+        :meth:`unregister_method` to remove it again.
+        """
+        register_method(name, runner)
+
+    def unregister_method(self, name: str) -> None:
+        """Remove a previously registered method from the registry."""
+        unregister_method(name)
 
     # ------------------------------------------------------------------ public
     def analyze(
@@ -114,7 +144,8 @@ class SQLEquivalenceAnalyzer:
             method_results: Dict[str, Any] = {}
             votes: List[bool] = []
             for method in methods:
-                outcome = self._runners[method](parsed1, parsed2, detailed)
+                runner = self._resolve_runner(method)
+                outcome = runner(parsed1, parsed2, detailed)
                 method_results[method] = outcome
                 votes.append(bool(outcome['is_equivalent']))
 
@@ -169,12 +200,23 @@ class SQLEquivalenceAnalyzer:
             logger.info("Cache cleared")
 
     # ----------------------------------------------------------------- private
+    def _resolve_runner(self, method: str) -> MethodRunner:
+        # Built-ins first -- they are bound methods and cheapest to dispatch.
+        if method in self._builtin_runners:
+            return self._builtin_runners[method]
+        # Fall back to the plugin registry for third-party methods.
+        for name, runner in iter_methods():
+            if name == method:
+                return runner
+        raise KeyError(method)
+
     def _validate_methods(self, methods: Sequence[str]) -> None:
-        unknown = [m for m in methods if m not in self._runners]
+        known = set(self._builtin_runners) | {name for name, _ in iter_methods()}
+        unknown = [m for m in methods if m not in known]
         if unknown:
             raise ValueError(
                 f"Unknown analysis method(s): {unknown}. "
-                f"Supported: {sorted(self._runners)}"
+                f"Supported: {sorted(known)}"
             )
 
     @staticmethod

@@ -1,6 +1,14 @@
 # SQLEquiv — Future Plan
 
-_Last updated: 2026-04-17 (author: code-review-refactor branch)_
+_Last updated: 2026-04-17 (phases A/B/C landed on code-review-refactor branch)_
+
+## Status
+
+- **Phase A** (make the three methods honest): ✅ landed in commit `20e8014`.
+- **Phase B** (test corpus, CI, ruff, mypy, benchmark): ✅ landed in `d53af95`.
+- **Phase C** (plugin registry, optional ML baseline, PyPI metadata): ✅ this commit.
+- **Phase D** (stretch goals): planned.
+
 
 This document records the current health of the library, the roadmap for
 reaching a first "useful" release, and — just as importantly — the things we

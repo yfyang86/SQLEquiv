@@ -1,6 +1,12 @@
-"""Machine learning model interfaces (placeholder).
+"""Pluggable ML-backed encoders and similarity models.
 
-This package is reserved for future ML-backed implementations of embedding
-and similarity models. The modules are currently empty stubs; plug your own
-implementations in or install an optional extras package.
+The core install ships with :class:`HashingVectorEncoder` -- a deterministic,
+zero-extra-dependency baseline. Heavier backends (GNNs, pretrained code
+encoders) are expected to live in separate packages and register themselves
+via the ``sql_equivalence.methods`` entry-point group documented in
+:mod:`sql_equivalence.plugins`.
 """
+
+from .embedding_models import HashingVectorEncoder, default_encoder
+
+__all__ = ['HashingVectorEncoder', 'default_encoder']

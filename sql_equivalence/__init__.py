@@ -46,6 +46,9 @@ from .operators.window_functions import (
 from .parser.ast_builder import ASTBuilder
 from .parser.normalizer import SQLNormalizer
 from .parser.sql_parser import ParsedQuery, SQLParser
+
+# Plugin registry for custom analysis methods
+from .plugins import register_method, registered_names, unregister_method
 from .representations.algebraic.expression_tree import ExpressionTree
 
 # Representations
@@ -84,4 +87,9 @@ __all__ = [
     "validate_sql",
     "visualize_query_graph",
     "visualize_expression_tree",
+
+    # Plugin registry
+    "register_method",
+    "unregister_method",
+    "registered_names",
 ]

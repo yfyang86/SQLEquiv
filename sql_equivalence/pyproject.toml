@@ -7,11 +7,48 @@ name = "sql-equivalence"
 dynamic = ["version"]
 
 description = "A comprehensive library for analyzing SQL query equivalence"
-readme = "README.md" 
+readme = "README.md"
 requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
 authors = [
     { name = "Yifan Yang", email = "yifan.yang@transwarp.io" }
 ]
+keywords = ["sql", "equivalence", "query-analysis", "relational-algebra"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "sqlglot>=11.0.0",
+    "networkx>=2.8",
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
+    "scikit-learn>=1.0.0",
+    "pandas>=1.3.0",
+]
+
+[project.optional-dependencies]
+viz = ["matplotlib>=3.5", "graphviz>=0.19", "plotly>=5.0"]
+ml = ["torch>=2.0", "transformers>=4.30"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.4", "mypy>=1.0"]
+
+[project.urls]
+Homepage = "https://github.com/yfyang86/SQLEquiv"
+Issues = "https://github.com/yfyang86/SQLEquiv/issues"
+Source = "https://github.com/yfyang86/SQLEquiv"
+
+[project.entry-points."sql_equivalence.methods"]
+# Built-in methods are registered programmatically; this table is reserved for
+# third-party packages.
 
 [tool.setuptools_scm]
 write_to = "sql_equivalence/_version.py"
