@@ -8,7 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Plugin registry (`sql_equivalence.plugins`) with
+- Deep test suite (102 passing tests, 7 xfail-strict known-gap markers):
+  per-checker tests for graph / embedding / algebraic plus integration
+  tests over complex SQL (CTEs, window functions, set operations,
+  subqueries, multi-way joins, aggregation with HAVING). See
+  `tests/test_graph.py`, `tests/test_embedding.py`, `tests/test_algebraic.py`,
+  `tests/test_complex_queries.py`, `tests/test_plugins.py`.
+- `QueryGraph.node_type_histogram()` and `iter_nodes_of_type()` helpers
+  used by the similarity metric and the tests.
+
+### Changed
+- `GraphEquivalenceChecker._compute_node_similarity` now blends a
+  type-only histogram with a `(type, value)` histogram so table names,
+  column names, and literal values actually influence similarity. This
+  is what closes the "SELECT id FROM users" vs "SELECT id FROM customers"
+  gap.
+
+### Fixed
+- Parser AST builder compatibility with current sqlglot:
+  `Window.partition_by`, `Union.distinct`, `Limit.offset`, and
+  `Select.distinct` are all methods or renamed args in current releases.
+  The builder now reads them via `args.get(...)`. Also: JOINs migrated
+  from `From.joins` to `Select.args['joins']` -- the builder now attaches
+  them as FROM children.
+- FROM key lookup: sqlglot renamed `'from'` to `'from_'`; the builder
+  tries both so old and new versions work.
+
+### Plugin registry (from earlier this release)
+- `sql_equivalence.plugins` with
   `register_method` / `unregister_method` / `load_entry_points`. Third-party
   packages can now register custom analysis methods via the
   `sql_equivalence.methods` entry-point group.

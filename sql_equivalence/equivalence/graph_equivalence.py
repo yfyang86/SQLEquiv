@@ -141,9 +141,17 @@ class GraphEquivalenceChecker(EquivalenceChecker):
     def _compute_node_similarity(
         self, graph1: QueryGraph, graph2: QueryGraph
     ) -> float:
-        return self._jaccard_on_histogram(
+        # Blend two scores so node values (table names, literal values) are
+        # honored without completely dominating the metric. The type-level
+        # Jaccard captures overall query shape; the (type, value) Jaccard
+        # additionally distinguishes e.g. "FROM users" vs "FROM customers".
+        type_sim = self._jaccard_on_histogram(
             graph1.node_type_histogram(), graph2.node_type_histogram()
         )
+        value_sim = self._jaccard_on_histogram(
+            _value_histogram(graph1), _value_histogram(graph2)
+        )
+        return 0.5 * type_sim + 0.5 * value_sim
 
     def _compute_edge_similarity(
         self, graph1: QueryGraph, graph2: QueryGraph
@@ -245,5 +253,20 @@ def _histogram(values) -> Dict[str, int]:
     out: Dict[str, int] = {}
     for v in values:
         key = v if v is not None else 'unknown'
+        out[key] = out.get(key, 0) + 1
+    return out
+
+
+def _value_histogram(graph: QueryGraph) -> Dict[str, int]:
+    """Histogram keyed by ``(type, value)`` so table names, literal values,
+    and the like influence similarity instead of being lost to type-only
+    buckets."""
+    out: Dict[str, int] = {}
+    for attrs in graph.node_attributes.values():
+        node_type = attrs.get('type', 'unknown')
+        value = attrs.get('value')
+        if value is None:
+            continue  # Type-only nodes are already covered by the type histogram.
+        key = f"{node_type}:{value}"
         out[key] = out.get(key, 0) + 1
     return out

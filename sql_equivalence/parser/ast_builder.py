@@ -163,14 +163,23 @@ class ASTBuilder:
             if child_node:
                 node.add_child(child_node)
 
-        # Add attributes
-        if expr.distinct:
+        # ``expr.distinct`` is a bound method in current sqlglot, so always
+        # truthy. Use the args dict for the flag.
+        if expr.args.get('distinct') is not None:
             node.attributes['distinct'] = True
 
-        # Process other clauses
-        if expr.args.get('from'):
-            from_node = self._build_from(expr.args['from'])
+        # The FROM key is ``from_`` (trailing underscore) in current sqlglot;
+        # keep a fallback for older releases.
+        from_expr = expr.args.get('from_') or expr.args.get('from')
+        if from_expr:
+            from_node = self._build_from(from_expr)
             if from_node:
+                # Attach any JOINs to the FROM node so downstream tools see
+                # them as part of the source clause.
+                for join_expr in expr.args.get('joins') or []:
+                    join_node = self._build_node(join_expr)
+                    if join_node:
+                        from_node.add_child(join_node)
                 node.add_child(from_node)
 
         if expr.args.get('where'):
@@ -201,22 +210,17 @@ class ASTBuilder:
         return node
 
     def _build_from(self, expr: exp.From) -> ASTNode:
-        """Build FROM node."""
-        node = ASTNode(NodeType.FROM)
+        """Build FROM node.
 
-        # Process table references
+        JOINs are handled in :meth:`_build_select` because newer sqlglot
+        versions attach them to the Select, not the From. The Select builder
+        appends them as children of this FROM node.
+        """
+        node = ASTNode(NodeType.FROM)
         if expr.this:
             table_node = self._build_node(expr.this)
             if table_node:
                 node.add_child(table_node)
-
-        # Process joins
-        if hasattr(expr, 'joins'):
-            for join in expr.joins:
-                join_node = self._build_node(join)
-                if join_node:
-                    node.add_child(join_node)
-
         return node
 
     def _build_where(self, expr: exp.Where) -> ASTNode:
@@ -275,8 +279,9 @@ class ASTBuilder:
         if expr.expression:
             node.value = self._get_literal_value(expr.expression)
 
-        if expr.offset:
-            node.attributes['offset'] = self._get_literal_value(expr.offset)
+        offset_expr = expr.args.get('offset')
+        if offset_expr:
+            node.attributes['offset'] = self._get_literal_value(offset_expr)
 
         return node
 
@@ -309,7 +314,7 @@ class ASTBuilder:
         """Build UNION node."""
         node = ASTNode(NodeType.UNION)
 
-        if expr.distinct:
+        if expr.args.get('distinct'):
             node.attributes['distinct'] = True
         else:
             node.attributes['all'] = True
@@ -331,7 +336,7 @@ class ASTBuilder:
         """Build INTERSECT node."""
         node = ASTNode(NodeType.INTERSECT)
 
-        if expr.distinct:
+        if expr.args.get('distinct'):
             node.attributes['distinct'] = True
 
         # Add both sides
@@ -351,7 +356,7 @@ class ASTBuilder:
         """Build EXCEPT node."""
         node = ASTNode(NodeType.EXCEPT)
 
-        if expr.distinct:
+        if expr.args.get('distinct'):
             node.attributes['distinct'] = True
 
         # Add both sides
@@ -467,16 +472,18 @@ class ASTBuilder:
                 node.add_child(func_node)
 
         # Add PARTITION BY
-        if expr.partition_by:
-            for partition_expr in expr.partition_by:
+        partition_by = expr.args.get('partition_by')
+        if partition_by:
+            for partition_expr in partition_by:
                 partition_node = self._build_node(partition_expr)
                 if partition_node:
                     partition_node.attributes['is_partition'] = True
                     node.add_child(partition_node)
 
         # Add ORDER BY
-        if expr.order:
-            order_node = self._build_node(expr.order)
+        order = expr.args.get('order')
+        if order:
+            order_node = self._build_node(order)
             if order_node:
                 order_node.attributes['is_window_order'] = True
                 node.add_child(order_node)

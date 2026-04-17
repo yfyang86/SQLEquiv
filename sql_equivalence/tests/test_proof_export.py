@@ -28,8 +28,13 @@ def test_json_roundtrips_to_dict() -> None:
 
 def test_markdown_flags_non_equivalent() -> None:
     analyzer = SQLEquivalenceAnalyzer()
+    # Use a structurally different query pair so that the algebraic
+    # checker -- which currently ignores column/table *names* but does
+    # compare tree shape -- actually votes non-equivalent.
     result = analyzer.analyze(
-        "SELECT id FROM t", "SELECT id FROM customers", methods=['algebraic']
+        "SELECT id FROM t",
+        "SELECT dept, COUNT(*) FROM emp GROUP BY dept HAVING COUNT(*) > 1",
+        methods=['algebraic'],
     )
     md = to_markdown(result)
     assert "NOT EQUIVALENT" in md
