@@ -8,9 +8,9 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
 
-from .base import EquivalenceChecker, EquivalenceResult, EquivalenceType
 from ..parser.sql_parser import ParsedQuery
 from ..representations.embedding.graph_embedding import GraphEmbedding
+from .base import EquivalenceChecker, EquivalenceResult, EquivalenceType
 
 logger = logging.getLogger(__name__)
 

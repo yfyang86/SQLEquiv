@@ -2,10 +2,10 @@
 """Base classes for equivalence checking."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-import time
+from typing import Any, Dict, List
+
 
 class EquivalenceType(Enum):
     """Types of equivalence."""
@@ -23,11 +23,11 @@ class EquivalenceResult:
     details: Dict[str, Any] = field(default_factory=dict)
     execution_time: float = 0.0
     proof_steps: List[str] = field(default_factory=list)
-    
+
     def add_proof_step(self, step: str) -> None:
         """Add a proof step."""
         self.proof_steps.append(step)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
@@ -41,47 +41,47 @@ class EquivalenceResult:
 
 class EquivalenceChecker(ABC):
     """Abstract base class for equivalence checkers."""
-    
+
     def __init__(self):
         self.rules = []
         self.config = {}
-    
+
     @abstractmethod
     def check_equivalence(self, query1: Any, query2: Any) -> EquivalenceResult:
         """
         Check if two queries are equivalent.
-        
+
         Args:
             query1: First query representation
             query2: Second query representation
-            
+
         Returns:
             EquivalenceResult object
         """
         pass
-    
+
     @abstractmethod
     def compute_similarity(self, query1: Any, query2: Any) -> float:
         """
         Compute similarity score between two queries.
-        
+
         Args:
             query1: First query representation
             query2: Second query representation
-            
+
         Returns:
             Similarity score between 0.0 and 1.0
         """
         pass
-    
+
     def set_config(self, config: Dict[str, Any]) -> None:
         """Set configuration parameters."""
         self.config.update(config)
-    
+
     def add_rule(self, rule: Any) -> None:
         """Add a transformation or equivalence rule."""
         self.rules.append(rule)
-    
+
     def clear_rules(self) -> None:
         """Clear all rules."""
         self.rules.clear()

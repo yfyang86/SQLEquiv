@@ -2,8 +2,8 @@
 
 import pytest
 
-from sql_equivalence.parser.sql_parser import SQLParser
 from sql_equivalence.parser.normalizer import SQLNormalizer
+from sql_equivalence.parser.sql_parser import SQLParser
 
 
 @pytest.fixture

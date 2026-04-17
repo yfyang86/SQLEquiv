@@ -1,13 +1,20 @@
 # sql_equivalence/representations/algebraic/__init__.py
 """Algebraic representation module."""
 
-from .relational_algebra import AlgebraicExpression
+from .expression_tree import ExpressionNode, ExpressionTree
 from .operators import (
-    AlgebraicOperator, ProjectOperator, SelectOperator, 
-    JoinOperator, UnionOperator, IntersectOperator, ExceptOperator,
-    AggregateOperator, GroupByOperator, OrderByOperator
+    AggregateOperator,
+    AlgebraicOperator,
+    ExceptOperator,
+    GroupByOperator,
+    IntersectOperator,
+    JoinOperator,
+    OrderByOperator,
+    ProjectOperator,
+    SelectOperator,
+    UnionOperator,
 )
-from .expression_tree import ExpressionTree, ExpressionNode
+from .relational_algebra import AlgebraicExpression
 
 __all__ = [
     'AlgebraicExpression',

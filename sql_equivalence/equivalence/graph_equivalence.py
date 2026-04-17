@@ -2,14 +2,13 @@
 
 import logging
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 import networkx as nx
 import numpy as np
 
-from .base import EquivalenceChecker, EquivalenceResult, EquivalenceType
 from ..representations.graph.query_graph import QueryGraph
-from ..representations.graph.lqt import LogicalQueryTree
+from .base import EquivalenceChecker, EquivalenceResult, EquivalenceType
 
 logger = logging.getLogger(__name__)
 

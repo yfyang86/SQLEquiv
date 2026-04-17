@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install package and test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r sql_equivalence/requirements.txt
+          pip install pytest pytest-cov
+      - name: Run tests
+        run: |
+          pytest sql_equivalence/tests/ \
+            --override-ini="addopts=" \
+            --cov=sql_equivalence --cov-report=term-missing \
+            -q
+
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install ruff
+      - run: ruff check sql_equivalence
+
+  typecheck:
+    name: Type check (mypy)
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Strict typing comes in Phase C; informational for now.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          pip install mypy
+          pip install -r sql_equivalence/requirements.txt
+      - run: mypy --ignore-missing-imports sql_equivalence

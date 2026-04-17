@@ -1,10 +1,10 @@
 # sql_equivalence/equivalence/__init__.py
 """Query equivalence checking module."""
 
-from .base import EquivalenceChecker, EquivalenceResult
 from .algebraic_equivalence import AlgebraicEquivalenceChecker
-from .graph_equivalence import GraphEquivalenceChecker
+from .base import EquivalenceChecker, EquivalenceResult
 from .embedding_similarity import EmbeddingSimilarityChecker
+from .graph_equivalence import GraphEquivalenceChecker
 
 __all__ = [
     'EquivalenceChecker',

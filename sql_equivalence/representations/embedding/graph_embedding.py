@@ -1,6 +1,6 @@
 """Graph embedding for queries."""
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import numpy as np
 

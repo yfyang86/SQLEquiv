@@ -1,8 +1,10 @@
 # setup.py
 """Setup script for sql-equivalence package."""
 
-from setuptools import setup, find_packages
 import os
+
+from setuptools import find_packages, setup
+
 
 # Read the README file
 def read_long_description():
@@ -12,7 +14,7 @@ def read_long_description():
 
 # Read requirements
 def read_requirements(filename):
-    with open(filename, 'r') as f:
+    with open(filename) as f:
         return [line.strip() for line in f if line.strip() and not line.startswith('#')]
 
 setup(
@@ -87,7 +89,7 @@ setup(
         ],
     },
     keywords=[
-        'sql', 'query', 'equivalence', 'database', 
+        'sql', 'query', 'equivalence', 'database',
         'relational algebra', 'graph', 'embedding',
         'query optimization', 'sql analysis'
     ],

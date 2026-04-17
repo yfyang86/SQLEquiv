@@ -5,18 +5,18 @@ def interactive_demo():
     """Run an interactive demo."""
     from sql_equivalence import SQLEquivalenceAnalyzer
     from sql_equivalence.utils import format_sql
-    
+
     print("""
     =====================================
     SQL Equivalence Analysis Demo
     =====================================
-    
+
     This demo will analyze some common SQL query patterns
     and show you whether they are equivalent.
     """)
-    
+
     analyzer = SQLEquivalenceAnalyzer()
-    
+
     demos = [
         {
             'name': 'Simple Filter Equivalence',
@@ -49,28 +49,28 @@ def interactive_demo():
         ##UNION is not implemented##     'expected': True
         ##UNION is not implemented## }
     ]
-    
+
     for i, demo in enumerate(demos, 1):
         print(f"\n{'-'*50}")
         print(f"Demo {i}: {demo['name']}")
         print(f"{'-'*50}")
-        
+
         print("\nQuery 1:")
         print(format_sql(demo['sql1']))
         print("\nQuery 2:")
         print(format_sql(demo['sql2']))
-        
+
         print("\nAnalyzing...")
         result = analyzer.analyze(demo['sql1'], demo['sql2'])
-        
-        print(f"\nResult:")
+
+        print("\nResult:")
         print(f"  Equivalent: {result.is_equivalent}")
         print(f"  Confidence: {result.confidence:.2%}")
         print(f"  Expected: {demo['expected']}")
         print(f"  Match: {'✓' if result.is_equivalent == demo['expected'] else '✗'}")
-        
+
         input("\nPress Enter to continue...")
-    
+
     print(f"\n{'='*50}")
     print("Demo completed!")
     print(f"{'='*50}")
@@ -78,10 +78,10 @@ def interactive_demo():
 def main():
     """Main entry point for examples."""
     import sys
-    
+
     if len(sys.argv) > 1:
         example = sys.argv[1]
-        
+
         if example == 'basic':
             from .basic_examples import run_all_basic_examples
             run_all_basic_examples()
@@ -105,7 +105,7 @@ def main():
         print("  advanced   - Run advanced examples")
         print("  demo       - Run interactive demo")
         print("  quickstart - Show quick start guide")
-        
+
         print("\nOr import specific examples:")
         print("  from sql_equivalence.examples import example_simple_equivalence")
         print("  example_simple_equivalence()")

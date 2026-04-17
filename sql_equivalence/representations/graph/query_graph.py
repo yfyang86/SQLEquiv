@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import networkx as nx
 import numpy as np
 
-from ...parser.ast_builder import ASTNode, NodeType
+from ...parser.ast_builder import ASTNode
 from ..base import QueryRepresentation
 
 

@@ -3,45 +3,43 @@
 
 from .algebraic_rules import (
     AlgebraicRule,
-    SelectionPushdown,
-    ProjectionPushdown,
-    JoinCommutativity,
     JoinAssociativity,
-    SelectionSplit,
-    SelectionCombine,
-    ProjectionCascade,
-    UnionCommutativity,
-    UnionAssociativity,
+    JoinCommutativity,
     PredicateSimplification,
+    ProjectionCascade,
+    ProjectionPushdown,
     RedundantJoinElimination,
+    SelectionCombine,
+    SelectionPushdown,
+    SelectionSplit,
+    UnionAssociativity,
+    UnionCommutativity,
+    apply_algebraic_rules,
     get_all_algebraic_rules,
-    apply_algebraic_rules
 )
-
 from .graph_transformations import (
+    CycleDetection,
+    EdgeReduction,
+    GraphNormalization,
     GraphTransformation,
     NodeMerging,
-    EdgeReduction,
-    SubgraphExtraction,
-    GraphNormalization,
     PathSimplification,
-    CycleDetection,
+    SubgraphExtraction,
+    apply_graph_transformations,
     get_all_graph_transformations,
-    apply_graph_transformations
 )
-
 from .optimization_rules import (
-    OptimizationRule,
+    CostBasedOptimizer,
     IndexSuggestion,
     JoinOrderOptimization,
+    MaterializedViewRewriting,
+    OptimizationRule,
+    PartitionPruning,
+    PredicatePushdown,
     SubqueryUnnesting,
     ViewMerging,
-    PredicatePushdown,
-    PartitionPruning,
-    MaterializedViewRewriting,
-    CostBasedOptimizer,
     get_optimization_rules,
-    optimize_query
+    optimize_query,
 )
 
 __all__ = [
@@ -60,7 +58,7 @@ __all__ = [
     'RedundantJoinElimination',
     'get_all_algebraic_rules',
     'apply_algebraic_rules',
-    
+
     # Graph transformations
     'GraphTransformation',
     'NodeMerging',
@@ -71,7 +69,7 @@ __all__ = [
     'CycleDetection',
     'get_all_graph_transformations',
     'apply_graph_transformations',
-    
+
     # Optimization rules
     'OptimizationRule',
     'IndexSuggestion',
