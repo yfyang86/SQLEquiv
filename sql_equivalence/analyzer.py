@@ -68,9 +68,9 @@ class SQLEquivalenceAnalyzer:
         self.graph_checker = GraphEquivalenceChecker()
         self.embedding_checker = EmbeddingSimilarityChecker(embedding_model)
 
-        self._cache: Optional[Dict[Tuple[str, str, Tuple[str, ...]], AnalysisResult]] = (
-            {} if enable_caching else None
-        )
+        self._cache: Optional[
+            Dict[Tuple[str, str, Tuple[str, ...], bool], AnalysisResult]
+        ] = ({} if enable_caching else None)
         self._runners: Dict[str, MethodRunner] = {
             'algebraic': self._run_algebraic,
             'graph': self._run_graph,
@@ -101,7 +101,7 @@ class SQLEquivalenceAnalyzer:
         methods = tuple(methods) if methods is not None else DEFAULT_METHODS
         self._validate_methods(methods)
 
-        cache_key = (sql1, sql2, tuple(sorted(methods)))
+        cache_key = (sql1, sql2, tuple(sorted(methods)), bool(detailed))
         if self._cache is not None and cache_key in self._cache:
             logger.debug("Returning cached result")
             return self._cache[cache_key]

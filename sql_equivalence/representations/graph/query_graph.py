@@ -5,15 +5,20 @@ from typing import Any, Dict, List, Optional, Tuple
 import networkx as nx
 import numpy as np
 
+from ...parser.ast_builder import ASTNode, NodeType
 from ..base import QueryRepresentation
 
 
 class QueryGraph(QueryRepresentation):
     """Graph representation of a SQL query.
 
-    The graph is stored as a NetworkX :class:`~networkx.DiGraph`. Node and edge
-    metadata are kept in parallel dictionaries so callers can access rich
-    attributes without having to traverse the NetworkX graph.
+    The graph is stored as a NetworkX :class:`~networkx.DiGraph`. Each AST
+    node becomes a graph node carrying its ``type``, ``value``, and
+    ``attributes``; edges reflect the AST parent-child relationship and are
+    labeled by the parent's type (e.g. ``"select-child"``, ``"from-child"``).
+
+    Node and edge metadata are kept in parallel dictionaries so callers can
+    access rich attributes without traversing the NetworkX graph.
     """
 
     def __init__(self, parsed_query: 'ParsedQuery'):
@@ -22,10 +27,39 @@ class QueryGraph(QueryRepresentation):
         self.node_counter: int = 0
         self.node_attributes: Dict[int, Dict[str, Any]] = {}
         self.edge_attributes: Dict[Tuple[int, int], Dict[str, Any]] = {}
+        self.root_node: Optional[int] = None
 
+    # ---------------------------------------------------------------- build
     def build(self) -> None:
+        """Populate the graph from ``self.parsed_query.ast``."""
+        ast = getattr(self.parsed_query, 'ast', None)
+        if ast is not None:
+            self.root_node = self._walk(ast)
         self._built = True
 
+    def _walk(self, ast: ASTNode, parent_id: Optional[int] = None) -> int:
+        """Recursively add ``ast`` and its subtree to the graph.
+
+        Returns the id assigned to ``ast``.
+        """
+        node_id = self.add_node(
+            node_type=ast.node_type.value,
+            attributes={
+                'value': ast.value,
+                **ast.attributes,
+            },
+        )
+        if parent_id is not None:
+            self.add_edge(
+                parent_id,
+                node_id,
+                edge_type=f"{self.node_attributes[parent_id]['type']}-child",
+            )
+        for child in ast.children:
+            self._walk(child, node_id)
+        return node_id
+
+    # ----------------------------------------------------------------- CRUD
     def add_node(self, node_type: str, attributes: Dict[str, Any]) -> int:
         node_id = self.node_counter
         self.node_counter += 1
@@ -46,9 +80,11 @@ class QueryGraph(QueryRepresentation):
         self.graph.add_edge(source, target, **payload)
         self.edge_attributes[(source, target)] = payload
 
+    # ---------------------------------------------------------- serializers
     def to_dict(self) -> Dict[str, Any]:
         return {
             'type': 'query_graph',
+            'root': self.root_node,
             'nodes': list(self.graph.nodes()),
             'edges': list(self.graph.edges()),
             'node_attributes': self.node_attributes,
@@ -63,19 +99,30 @@ class QueryGraph(QueryRepresentation):
         )
 
     def visualize(self, output_path: Optional[str] = None) -> Any:
-        # Import matplotlib lazily so that the core library does not require a
-        # display-capable backend when visualization is unused.
+        # Import matplotlib lazily so core usage does not require a display
+        # backend.
         import matplotlib.pyplot as plt
 
         plt.figure(figsize=(10, 8))
         pos = nx.spring_layout(self.graph)
-        nx.draw(self.graph, pos, with_labels=True, node_color='lightblue')
+        labels = {
+            n: self.node_attributes.get(n, {}).get('type', str(n))
+            for n in self.graph.nodes()
+        }
+        nx.draw(
+            self.graph,
+            pos,
+            with_labels=True,
+            labels=labels,
+            node_color='lightblue',
+        )
 
         if output_path:
             plt.savefig(output_path)
             return output_path
         return plt.gcf()
 
+    # ----------------------------------------------------------- conversions
     def to_adjacency_matrix(self) -> np.ndarray:
         """Return the dense adjacency matrix, ordered by node id."""
         nodelist = sorted(self.graph.nodes())
@@ -98,3 +145,18 @@ class QueryGraph(QueryRepresentation):
             sub.edge_attributes[(src, dst)] = attrs
         sub._built = self._built
         return sub
+
+    # -------------------------------------------------------- introspection
+    def iter_nodes_of_type(self, node_type: str):
+        """Yield node ids whose stored ``type`` equals ``node_type``."""
+        for nid, attrs in self.node_attributes.items():
+            if attrs.get('type') == node_type:
+                yield nid
+
+    def node_type_histogram(self) -> Dict[str, int]:
+        """Return a histogram of node types across the graph."""
+        histogram: Dict[str, int] = {}
+        for attrs in self.node_attributes.values():
+            t = attrs.get('type', 'unknown')
+            histogram[t] = histogram.get(t, 0) + 1
+        return histogram
